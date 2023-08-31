@@ -57,8 +57,8 @@ Usage examples
 
 output example
 --------------
-` qqnews <docs/update/qq-news.md>`_
-` wikipedia <docs/update/wikipedia-唐宋八大家.md>`_
+- `qq-news.md <docs/update/qq-news.md>`_
+- `wikipedia-唐宋八大家.md <docs/update/wikipedia-唐宋八大家.md>`_
 
 
 
