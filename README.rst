@@ -55,6 +55,13 @@ Usage examples
         f.write(result)
 
 
+output example
+--------------
+` qqnews <docs/update/qq-news.md>`_
+` wikipedia <docs/update/wikipedia-唐宋八大家.md>`_
+
+
+
 Update 2023/08/31
 -----------
 - The image parsing function has been added, which supports parsing images from web pages and outputting them in the correct markdown format.
