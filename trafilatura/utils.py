@@ -300,7 +300,8 @@ def normalize_tags(tags):
 def is_image_file(imagesrc):
     '''Check if the observed string corresponds to a valid image extension,
        return False otherwise'''
-    return bool(imagesrc is not None and IMAGE_EXTENSION.search(imagesrc))
+    return imagesrc is not None # TODO 考虑嵌入式图片
+    #return bool(imagesrc is not None and IMAGE_EXTENSION.search(imagesrc))
 
 
 def normalize_authors(current_authors, author_string):

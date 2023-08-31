@@ -109,8 +109,8 @@ def build_xml_output(docmeta):
     if docmeta.commentsbody is not None:
         docmeta.commentsbody.tag = 'comments'
         output.append(clean_attributes(docmeta.commentsbody))
-# XML invalid characters
-# https://chase-seibert.github.io/blog/2011/05/20/stripping-control-characters-in-python.html
+    # XML invalid characters
+    # https://chase-seibert.github.io/blog/2011/05/20/stripping-control-characters-in-python.html
     return output
 
 
@@ -200,7 +200,7 @@ def validate_tei(xmldoc):  # , filename=""
     return result
 
 
-def replace_element_text(element, include_formatting):
+def replace_element_text(element, include_formatting, el_in_table=False):
     '''Determine element text based on text and tail'''
     # handle formatting: convert to markdown
     if include_formatting is True and element.text is not None:
@@ -229,7 +229,13 @@ def replace_element_text(element, include_formatting):
         else:
             LOGGER.warning('empty link: %s %s', element.text, element.attrib)
     # handle text
-    return (element.text or '') + (element.tail or '')
+    if el_in_table:  # 如果在table内部，使用\n则会把markdown的格式打乱，根据markdown规范，table内可以使用html<br>换行
+        if element.tail == '\n':
+            return (element.text or '') + "<br>"
+        else:
+            return element.text or ''
+    else:
+        return (element.text or '') + (element.tail or '')
 
 
 def merge_with_parent(element, include_formatting=False):
@@ -254,13 +260,51 @@ def merge_with_parent(element, include_formatting=False):
     parent.remove(element)
 
 
+def table2md(table_elem):
+    """
+    Convert a table element to markdown.
+    """
+    table = []
+    md_header = []
+    is_header = True
+    for row in table_elem.iterchildren("row"):
+        row_text = []
+        for cell in row.iterchildren("cell"):
+            cell_text = ""
+            if is_header:
+                md_header.append("----")  # add markdown header separator
+            for el in cell.iter("*"):
+                if el.tag == 'graphic':
+                    text = f'{el.get("title", "")} {el.get("alt", "")}'
+                    cell_text += f"![{text.strip()}]({el.get('src', '')})"
+                else:
+                    text = replace_element_text(el, include_formatting=True, el_in_table=True)
+                    cell_text += text
+            row_text.append(cell_text)
+
+        table.append("|" + "|".join(row_text) + "|")  # add row to table
+
+        if is_header:
+            table.append("|" + "|".join(md_header) + "|")
+            is_header = False
+
+    # iter through table again to mark all elements as done
+    for element in table_elem.iter("*"):
+        element.tag = "done"
+
+    return "\n".join(table)
+
+
 def xmltotxt(xmloutput, include_formatting):
     '''Convert to plain text format and optionally preserve formatting as markdown.'''
     returnlist = []
     # strip_tags(xmloutput, 'div', 'main', 'span')
     # iterate and convert to list of strings
     for element in xmloutput.iter('*'):
-        if element.text is None and element.tail is None:
+        t = element.tag
+        if element.tag == 'done':
+            continue
+        if element.text is None and element.tail is None and element.tag != 'done':
             if element.tag == 'graphic':
                 # add source, default to ''
                 text = f'{element.get("title", "")} {element.get("alt", "")}'
@@ -268,6 +312,9 @@ def xmltotxt(xmloutput, include_formatting):
             # newlines for textless elements
             if element.tag in ('graphic', 'row', 'table'):
                 returnlist.append('\n')
+            if element.tag == 'table':
+                table_markdown = table2md(element)
+                returnlist.append(table_markdown)
             continue
         # process text
         textelement = replace_element_text(element, include_formatting)
@@ -292,13 +339,13 @@ def write_teitree(docmeta):
     # post
     postbody = clean_attributes(docmeta.body)
     postbody.tag = 'div'
-    postbody.set('type', 'entry') # rendition='#pst'
+    postbody.set('type', 'entry')  # rendition='#pst'
     textbody.append(postbody)
     # comments
     if docmeta.commentsbody is not None:
         commentsbody = clean_attributes(docmeta.commentsbody)
         commentsbody.tag = 'div'
-        commentsbody.set('type', 'comments') # rendition='#cmt'
+        commentsbody.set('type', 'comments')  # rendition='#cmt'
         textbody.append(commentsbody)
     return teidoc
 
@@ -433,7 +480,7 @@ def _handle_unwanted_tails(element):
         new_sibling = Element('p')
         new_sibling.text = element.tail.strip()
         parent = element.getparent()
-        parent.insert(parent.index(element) + 1 , new_sibling)
+        parent.insert(parent.index(element) + 1, new_sibling)
     element.tail = None
 
 

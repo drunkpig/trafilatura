@@ -53,9 +53,10 @@ JSON_SEARCH = re.compile(r'"articlebody": *"(.+?)(?<!\\)"', re.I)
 class Extractor:
     "Defines a class to store all extraction options."
     __slots__ = [
-    'config', 'fast', 'precision', 'recall', 'comments',
-    'formatting', 'links', 'images', 'tables', 'dedup', 'lang',
+        'config', 'fast', 'precision', 'recall', 'comments',
+        'formatting', 'links', 'images', 'tables', 'dedup', 'lang',
     ]
+
     # consider dataclasses for Python 3.7+
     def __init__(self, config, fast, precision, recall, comments,
                  formatting, links, images, tables, deduplicate,
@@ -295,7 +296,10 @@ def handle_paragraphs(element, potential_tags, options):
             continue
         # spacing = child.tag in SPACING_PROTECTED  # todo: outputformat.startswith('xml')?
         # todo: act on spacing here?
-        processed_child = handle_textnode(child, options, comments_fix=False, preserve_spaces=True)
+        if 'graphic' in potential_tags and child.tag == 'graphic':
+            processed_child = handle_image(child)
+        else:
+            processed_child = handle_textnode(child, options, comments_fix=False, preserve_spaces=True) # TODO 如果是图像标签，那么这个地方肯定返回None。这是不合理的
         if processed_child is not None:
             # todo: needing attention!
             if processed_child.tag == 'p':
@@ -308,6 +312,8 @@ def handle_paragraphs(element, potential_tags, options):
                 continue
             # handle formatting
             newsub = Element(child.tag)
+            for k, v in processed_child.attrib.items(): # 把属性copy过去
+                newsub.attrib[k] = v
             if processed_child.tag in P_FORMATTING:
                 # check depth and clean
                 if len(processed_child) > 0:
@@ -403,7 +409,7 @@ def handle_table(table_elem, potential_tags, options):
                         processed_subchild = handle_textelem(child, potential_tags.union(['div']), options)
                     # add child element to processed_element
                     if processed_subchild is not None:
-                        subchildelem = SubElement(newchildelem, processed_subchild.tag)
+                        subchildelem = SubElement(newchildelem, processed_subchild.tag, attrib=processed_subchild.attrib) # TODO 这里没有带上attrib参数，因此丢掉了图片的src属性
                         subchildelem.text, subchildelem.tail = processed_subchild.text, processed_subchild.tail
                     child.tag = 'done'
             # add to tree
@@ -497,7 +503,7 @@ def recover_wild_text(tree, result_body, options, potential_tags=TAG_CATALOG):
         strip_tags(search_tree, 'span')
     subelems = search_tree.xpath(search_expr)
     result_body.extend(filter(lambda x: x is not None, (handle_textelem(e, potential_tags, options)
-                       for e in subelems)))
+                                                        for e in subelems)))
     return result_body
 
 
@@ -583,7 +589,15 @@ def extract_content(tree, options):
         if {e.tag for e in subelems} == {'lb'}:
             subelems = [subtree]
         # extract content
-        result_body.extend(filter(lambda x: x is not None, (handle_textelem(e, potential_tags, options) for e in subelems)))
+        # _temp_result_body = []
+        # for i, e in enumerate(subelems):
+        #     a = i
+        #     t = e.tag
+        #     _r = handle_textelem(e, potential_tags, options)
+        #     if _r is not None:
+        #         _temp_result_body.append(_r)
+
+        result_body.extend(filter(lambda x: x is not None, (handle_textelem(e, potential_tags, options) for e in subelems)))  # TODO 这里把图片等丢掉了
         # remove trailing titles
         while len(result_body) > 0 and (result_body[-1].tag in NOT_AT_THE_END):
             result_body[-1].getparent().remove(result_body[-1])
@@ -700,12 +714,12 @@ def compare_extraction(tree, backup_tree, url, body, text, len_text, options):
         LOGGER.debug('using custom extraction: %s', url)
     # override faulty extraction: try with justext
     if body.xpath(SANITIZED_XPATH) or len_text < min_target_length:  # body.find(...)
-    # or options.recall is True ?
+        # or options.recall is True ?
         LOGGER.debug('unclean document triggering justext examination: %s', url)
         # tree = prune_unwanted_sections(tree, {}, options)
         body2, text2, len_text2, jt_result = justext_rescue(tree, url, options.lang, body, 0, '')
         # prevent too short documents from replacing the main text
-        if jt_result is True and not len_text > 4*len_text2:  # threshold could be adjusted
+        if jt_result is True and not len_text > 4 * len_text2:  # threshold could be adjusted
             LOGGER.debug('using justext, length: %s', len_text2)
             body, text, len_text = body2, text2, len_text2
     # post-processing: remove unwanted sections
@@ -877,7 +891,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
         ValueError: Extraction problem.
     """
     # init
-    if url_blacklist is None:
+    if url_blacklist is None:  # 使用url黑名单
         url_blacklist = set()
 
     # deprecation warnings
@@ -887,12 +901,12 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
             '"with_metadata" will be deprecated in a future version, use "only_with_metadata instead"',
             PendingDeprecationWarning
         )
-    #if no_fallback is True:
+    # if no_fallback is True:
     #    fast = no_fallback
-        #warnings.warn(
-        #    '"no_fallback" will be deprecated in a future version, use "fast" instead',
-        #    PendingDeprecationWarning
-        #)
+    # warnings.warn(
+    #    '"no_fallback" will be deprecated in a future version, use "fast" instead',
+    #    PendingDeprecationWarning
+    # )
 
     # load data
     try:
@@ -1060,14 +1074,14 @@ def extract(filecontent, url=None, record_id=None, no_fallback=False,
     # older, deprecated functions
     if kwargs and any([
         # output formats
-            'csv_output' in kwargs,
-            'json_output' in kwargs,
-            'tei_output' in kwargs,
-            'xml_output' in kwargs
-        ]):
+        'csv_output' in kwargs,
+        'json_output' in kwargs,
+        'tei_output' in kwargs,
+        'xml_output' in kwargs
+    ]):
         raise NameError(
             'Deprecated argument: use output_format instead, e.g. output_format="xml"'
-            )
+        )
         # todo: add with_metadata later
 
     # configuration init
