@@ -42,6 +42,22 @@ A Python package & command-line tool to gather text on the Web
     :width: 85%
     :target: https://trafilatura.readthedocs.org/
 
+Update 2023/08/31
+-----------
+- The image parsing function has been added, which supports parsing images from web pages and outputting them in the correct markdown format.
+- The issue of table disarray when converting XML to markdown format has been resolved.
+
+.. image:: docs/update/wikipedia-唐宋八大家.png
+    :alt: wikipedia with images and tables
+    :align: center
+    :width: 85%
+    :target: https://zh.wikipedia.org/wiki/%E5%94%90%E5%AE%8B%E5%85%AB%E5%A4%A7%E5%AE%B6
+
+.. image:: docs/update/qq-news.png
+    :alt: qq news with images integrated
+    :align: center
+    :width: 85%
+    :target: https://new.qq.com/rain/a/20230831A055CQ00
 
 Description
 -----------
