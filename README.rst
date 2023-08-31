@@ -42,6 +42,19 @@ A Python package & command-line tool to gather text on the Web
     :width: 85%
     :target: https://trafilatura.readthedocs.org/
 
+Usage examples
+----------------
+
+.. code-block:: python
+
+    url = "https://zh.wikipedia.org/wiki/%E5%94%90%E5%AE%8B%E5%85%AB%E5%A4%A7%E5%AE%B6"
+    downloaded = fetch_url(url)
+    format = "txt"
+    result = trafilatura.extract(downloaded, url, output_format=format, include_images=True,include_formatting=True)
+    with open(f"test.{format}", "w", encoding="utf-8") as f:
+        f.write(result)
+
+
 Update 2023/08/31
 -----------
 - The image parsing function has been added, which supports parsing images from web pages and outputting them in the correct markdown format.

@@ -13,8 +13,10 @@ import re  # import regex as re
 import warnings
 from copy import deepcopy
 
+from lxml import html
 from lxml.etree import Element, SubElement, strip_elements, strip_tags
 from lxml.html import tostring
+from urllib.parse import urljoin
 
 # own
 from .external import (SANITIZED_XPATH, justext_rescue, sanitize_tree,
@@ -452,7 +454,7 @@ def handle_image(element):
         return None
     # post-processing: URLs
     url = processed_element.get('src')
-    processed_element.set('src', re.sub(r'^//', 'http://', url))
+    #processed_element.set('src', re.sub(r'^//', 'http://', url)) # 这里注释掉，因为向这里传递页面的base_url链路太长了。因此在转换格式的时候再做这个处理
     return processed_element
 
 
@@ -949,6 +951,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
         tree_backup_2 = deepcopy(tree)
 
         # clean + use LXML cleaner
+
         cleaned_tree = tree_cleaning(tree, options)
         cleaned_tree_backup = deepcopy(cleaned_tree)
 
@@ -1026,7 +1029,7 @@ def timeout_handler(signum, frame):
     raise RuntimeError('unusual file processing time, aborting')
 
 
-def extract(filecontent, url=None, record_id=None, no_fallback=False,
+def extract(filecontent, url, record_id=None, no_fallback=False,
             favor_precision=False, favor_recall=False,
             include_comments=True, output_format='txt',
             tei_validation=False, target_language=None,
@@ -1086,6 +1089,10 @@ def extract(filecontent, url=None, record_id=None, no_fallback=False,
 
     # configuration init
     config = use_config(settingsfile, config)
+    # 先让url变成绝对的
+    tree = html.fromstring(filecontent)
+    tree.make_links_absolute(url)
+    filecontent = tostring(tree, encoding='utf-8').decode('utf-8')
 
     # extraction
     try:

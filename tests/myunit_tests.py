@@ -4,6 +4,7 @@ import sys
 
 import pytest
 from lxml import etree, html
+from lxml import html
 
 try:
     from cchardet import detect
@@ -111,8 +112,12 @@ def test_extract():
     url = "https://zh.wikipedia.org/wiki/%E5%94%90%E5%AE%8B%E5%85%AB%E5%A4%A7%E5%AE%B6" # table错乱
     #url = "https://www.msn.com/en-in/news/techandscience/chandrayaan-3-completes-lunar-bound-manoeuvre-separation-tomorrow-final-steps-explained/ar-AA1fkNbL?ocid=msedgntp&cvid=08587f33983f443583fc5bff9df5c7ff&ei=42" # msdn
     #url = "http://www.paulgraham.com/greatwork.html" # https://github.com/adbar/trafilatura/issues/396
+    url = "http://www.magickeys.com/books/gingerbread/index.html"
     downloaded = fetch_url(url)
+    # tree = html.fromstring(downloaded)
+    # tree.make_links_absolute(url)
+
     format = "txt"
-    result = trafilatura.extract(downloaded, output_format=format, include_images=True,include_formatting=True)
+    result = trafilatura.extract(downloaded, url, output_format=format, include_images=True,include_formatting=True)
     with open(f"d:/test.{format}", "w", encoding="utf-8") as f:
         f.write(result)
