@@ -107,17 +107,22 @@ def test_extract():
     url = "https://new.qq.com/rain/a/20230829A03IM600" # tx新闻，含一张文中图片
     # url = "https://victoriyaclub.com/anna85-ID-126-38-years-old/"
     # url = "https://www.sohu.com/a/716249036_114988"
-    # url = "https://k.sina.com.cn/article_5044281310_12ca99fde0200216bi.html?from=news&subch=onews" # 多图
+    url = "https://k.sina.com.cn/article_5044281310_12ca99fde0200216bi.html?from=news&subch=onews" # 多图
     # url = "https://victoriyaclub.com/anna85-ID-126-37-years-old/"
-    url = "https://zh.wikipedia.org/wiki/%E5%94%90%E5%AE%8B%E5%85%AB%E5%A4%A7%E5%AE%B6" # table错乱
+    # url = "https://zh.wikipedia.org/wiki/%E5%94%90%E5%AE%8B%E5%85%AB%E5%A4%A7%E5%AE%B6" # table错乱
     #url = "https://www.msn.com/en-in/news/techandscience/chandrayaan-3-completes-lunar-bound-manoeuvre-separation-tomorrow-final-steps-explained/ar-AA1fkNbL?ocid=msedgntp&cvid=08587f33983f443583fc5bff9df5c7ff&ei=42" # msdn
     #url = "http://www.paulgraham.com/greatwork.html" # https://github.com/adbar/trafilatura/issues/396
-    url = "http://www.magickeys.com/books/gingerbread/index.html"
+    # url = "http://www.magickeys.com/books/gingerbread/index.html"
+    url = "https://new.qq.com/rain/a/20230831A055CQ00"
+    url = "https://www.thefp.com/p/an-illustrated-guide-to-self-censorship" # 不工作
+    url = "https://openstax.org/books/anatomy-and-physiology/pages/6-1-the-functions-of-the-skeletal-system#fig-ch06_01_04"
+    url = "https://mp.weixin.qq.com/s/gd7LKWFsVD8WJDU2CTf9LQ"
+    url = "https://mp.weixin.qq.com/s?__biz=MzAwMjk0Mzc5OA==&mid=2247490670&idx=1&sn=a28a24ec83e516a2796ce64dcafd405c&chksm=9ac3e237adb46b2170dec9a53f61847b00cb019e1238d28d7365eabfdfc40cf3a36b8d36448e&scene=132&exptype=timeline_recommend_article_extendread_samebiz#wechat_redirect"
     downloaded = fetch_url(url)
     # tree = html.fromstring(downloaded)
     # tree.make_links_absolute(url)
 
     format = "txt"
     result = trafilatura.extract(downloaded, url, output_format=format, include_images=True,include_formatting=True)
-    with open(f"d:/test.{format}", "w", encoding="utf-8") as f:
+    with open(f"d:/test.{format}.md", "w", encoding="utf-8") as f:
         f.write(result)

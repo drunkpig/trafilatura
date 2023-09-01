@@ -308,7 +308,9 @@ def xmltotxt(xmloutput, include_formatting):
             if element.tag == 'graphic':
                 # add source, default to ''
                 text = f'{element.get("title", "")} {element.get("alt", "")}'
-                returnlist.extend(['![', text.strip(), ']', '(', element.get('src', ''), ')'])
+                # 图片上尽可能找到属性，优先src, 其次data-src, 其次正则匹配任意url
+                u = element.get('src', element.get('data-src', ''))
+                returnlist.extend(['![', text.strip(), ']', '(', u, ')'])
             # newlines for textless elements
             if element.tag in ('graphic', 'row', 'table'):
                 returnlist.append('\n')
